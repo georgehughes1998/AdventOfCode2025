@@ -2,6 +2,7 @@
 #
 # Usage : RunUnitTests.sh [DayN] [PartN] [TestN]
 
+TEST_OUTPUT_PATH=.test.out
 
 if [[ $# -gt 3 ]]; then
   echo "Incorrect usage : $0 [DayNumber] [PartNumber] [TestNumber]"
@@ -38,8 +39,31 @@ for DayNumber in $DayNumbers; do
       if [[ ! -f $TestExpectedPath ]]; then
         echo "ERROR: File $TestExpectedPath does not exist"
       fi
+      OutputExpected=$(cat $TestExpectedPath)
       
-      ./RunSolution.sh $DayNumber $PartNumber
+      # Run the solution
+      ./RunSolution.sh $DayNumber $PartNumber $TestInputPath > $TEST_OUTPUT_PATH
+      
+      # Display the output from the helper
+      # cat $TEST_OUTPUT_PATH
+      
+      # Get the output path
+      OutputPathString=$(cat $TEST_OUTPUT_PATH | grep OutputPath)
+      if [[ $OutputPathString =~ (OutputPath: (.+)) ]]; then
+        OutputPath=${BASH_REMATCH[2]}
+        OutputActual=$(cat $OutputPath)
+      else
+        echo "OutputPath not found: \"$OutputPathString\""
+        OutputActual=
+      fi
+      
+      if [[ $OutputActual == $OutputExpected ]]; then
+        echo "PASS: OutputActual == OutputExpected"
+      else
+        echo "FAIL: OutputActual != OutputExpected"
+        echo "OutputActual: $OutputActual"
+        echo "OutputExpected: $OutputExpected"
+      fi
       
     done
 
