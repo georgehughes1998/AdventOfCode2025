@@ -51,7 +51,7 @@ for DayNumber in $DayNumbers; do
       OutputPathString=$(cat $TEST_OUTPUT_PATH | grep OutputPath)
       if [[ $OutputPathString =~ (OutputPath: (.+)) ]]; then
         OutputPath=${BASH_REMATCH[2]}
-        OutputActual=$(cat $OutputPath)
+        OutputActual=$(<"$OutputPath")
       else
         echo "OutputPath not found: \"$OutputPathString\""
         OutputActual=
@@ -61,7 +61,7 @@ for DayNumber in $DayNumbers; do
         echo "PASS: OutputActual == OutputExpected"
       else
         echo "FAIL: OutputActual != OutputExpected"
-        echo "OutputActual: $OutputActual"
+        printf 'OutputActual: %s\n' "$OutputActual"
         echo "OutputExpected: $OutputExpected"
       fi
       
