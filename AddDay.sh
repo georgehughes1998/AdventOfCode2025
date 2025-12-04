@@ -11,7 +11,7 @@ DayNumber=$1
 
 echo Generating input and test input files
 mkdir -p Inputs/Test
-NEW_UNIT_TEST_PATHS=$(echo Inputs/Day${DayNumber}Part{1,2}.txt Inputs/Test/Day${DayNumber}Part{1,2}Test1.{input,expected}.txt)
+NEW_UNIT_TEST_PATHS=$(echo Inputs/Day${DayNumber}.txt Inputs/Test/Day${DayNumber}Part{1,2}Test1.{input,expected}.txt)
 touch $NEW_UNIT_TEST_PATHS
 ls -lrt $NEW_UNIT_TEST_PATHS
 echo

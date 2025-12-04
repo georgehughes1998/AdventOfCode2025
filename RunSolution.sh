@@ -9,7 +9,7 @@ fi
 
 DayNumber=$1
 PartNumber=$2
-InputPath=${3:-Inputs/Day${DayNumber}Part${PartNumber}.txt}
+InputPath=${3:-Inputs/Day${DayNumber}.txt}
 ScriptPath=Solutions/Day${DayNumber}Part${PartNumber}.sh
 OutputPath=.out
 OutputErrorPath=.err.out
