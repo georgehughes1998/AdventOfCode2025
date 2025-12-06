@@ -32,7 +32,7 @@ while read line; do
 
     running_totals[$i]=$(($current_value $operation $number))
     
-    #test $DEBUG && echo i: $i number: $number
+    test $DEBUG && echo i: $i number: $number
     i=$((i+1))
   done
 done < <(cat $1 | sed '$d')
