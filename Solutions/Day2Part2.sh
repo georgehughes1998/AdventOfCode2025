@@ -13,7 +13,7 @@ for i in $input; do
     N1=${BASH_REMATCH[1]}
     N2=${BASH_REMATCH[2]}
 
-    total=$((total + $(seq $N1 $N2 | grep "^\([0-9]\+\)\(\1\)\+$" | awk 'BEGIN { sum = 0}; { sum += $1 }; END { print sum } ')))
+    total=$((total + $(seq -f %1.0f $N1 $N2 | grep "^\([0-9]\+\)\(\1\)\+$" | awk 'BEGIN { sum = 0}; { sum += $1 }; END { print sum } ')))
   fi
 done
 
