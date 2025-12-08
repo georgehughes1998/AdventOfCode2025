@@ -2,7 +2,7 @@
 #
 # Usage : Solutions/Day8Part1.sh input.txt
 
-DEBUG=
+DEBUG=1
 OUT_DISTANCES=.tmp.distances.out
 OUT_BC_COMMAND=.tmp.bc_commands.out
 OUT_CONNECTIONS=.tmp.connections.out
@@ -13,7 +13,9 @@ declare positions_y
 declare positions_z
 
 # distances[$id1_$id2]=0
-declare -A distances
+# declare -a distances
+
+echo test
 
 while read id x y z; do
   positions_x[${id}]=$(echo $x | grep -o '[0-9]\+')
