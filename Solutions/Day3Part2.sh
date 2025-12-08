@@ -22,7 +22,7 @@ for battery in $input; do
   number_lines=$(wc -l < .tmp.out )
 
   # get Nth Number
-  for i in $(seq $NUMBER_INDEXES 1); do
+  for i in $(seq $NUMBER_INDEXES -1 1); do
     keep_lines=$(($number_lines - $i + 1))
     read index number < <(cat .tmp.out | awk -v ix=$index -v keep_lines=$keep_lines '{ if (NR > ix && NR <= keep_lines) print  $0 }' | sort -k2r -k1  | head -n1)
 
