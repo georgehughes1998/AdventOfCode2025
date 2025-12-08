@@ -2,7 +2,7 @@
 #
 # Usage : Solutions/Day7Part1.sh input.txt
 
-DEBUG=
+DEBUG=1
 
 offsets=
 total=0
@@ -19,15 +19,15 @@ while read line; do
   match_filter_args=$(for v in $offsets; do echo "-e $((v-1)) -e $((v+1))"; done | tr '\n' ' ')
   non_match_filter_args=$(for v in $next_offsets; do echo "-e $((v-1)) -e $((v+1))"; done | tr '\n' ' ')
 
-  next_offsets_matched=$(echo $next_offsets | grep -w $match_filter_args -o)
-  offsets_non_matched=$(echo $offsets | tr ' ' '\n' | grep -wov $non_match_filter_args)
+  next_offsets_matched=$(echo $next_offsets | tr ' ' '\n' | grep -w $match_filter_args -o  | sort -nu)
+  offsets_non_matched=$(echo $offsets | tr ' ' '\n' | grep -wov $non_match_filter_args | sort -nu)
   
   number_matches=$(echo $next_offsets_matched | wc -w)
   total=$(($total + $number_matches))
   
   test $DEBUG && echo Offsets: $offsets, next_offsets: $next_offsets, next_offsets_matched: $next_offsets_matched, offsets_non_matched: $offsets_non_matched, total: $total
 
-  offsets="$next_offsets_matched $offsets_non_matched"
+  offsets=$(echo "$next_offsets_matched $offsets_non_matched" | tr ' ' '\n' | sort -nu)
 done < $1
 
 echo $total
