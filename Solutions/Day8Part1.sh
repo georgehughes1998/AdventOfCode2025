@@ -1,0 +1,80 @@
+#/bin/bash
+#
+# Usage : Solutions/Day8Part1.sh input.txt
+
+DEBUG=
+OUT_DISTANCES=.tmp.distances.out
+OUT_BC_COMMAND=.tmp.bc_commands.out
+OUT_CONNECTIONS=.tmp.connections.out
+
+# positions_{$x,$y,$z}[$id]=0
+declare positions_x
+declare positions_y
+declare positions_z
+
+# distances[$id1_$id2]=0
+declare -A distances
+
+while read id x y z; do
+  positions_x[${id}]=$(echo $x | grep -o '[0-9]\+')
+  positions_y[${id}]=$(echo $y | grep -o '[0-9]\+')
+  positions_z[${id}]=$(echo $z | grep -o '[0-9]\+')
+  test $DEBUG && echo "id: $id, x: ${positions_x[${id}]}, y: ${positions_y[${id}]}, z: ${positions_z[${id}]}"
+done < <(cat $1 | tr ',' ' ' | nl)
+
+ids="${!positions_x[@]}"
+test $DEBUG && echo ids: $ids
+
+> $OUT_DISTANCES
+> $OUT_BC_COMMAND
+for id1 in $ids; do
+  for id2 in $(echo $ids | tr ' ' '\n' | awk -v limit=$id1 '{ if (NR > limit) print $0 }'); do
+    x1="${positions_x[${id1}]}"
+    y1="${positions_y[${id1}]}"
+    z1="${positions_z[${id1}]}"
+    
+    x2="${positions_x[${id2}]}"
+    y2="${positions_y[${id2}]}"
+    z2="${positions_z[${id2}]}"
+    
+    echo 'print "'$id1'", " ", "'$id2'", " ", sqrt(('$x1' - '$x2')^2 + ('$y1' - '$y2')^2 + ('$z1' - '$z2')^2), "\n" ' >> $OUT_BC_COMMAND
+    
+    test $DEBUG && echo "id1: $id1, id2: $id2, position1: ($x1,$y1,$z1), position2: ($x2,$y2,$z2)"
+  done &
+done
+wait
+
+bc < $OUT_BC_COMMAND > $OUT_DISTANCES
+
+
+cat $OUT_DISTANCES | sort -nk3 | head -n10 | awk '{ print $1" "$2 }' > $OUT_CONNECTIONS
+
+while read id1 id2; do
+  circuit_set_paths=$(grep -lw -e $id1 -e $id2 .tmp.circuits.*.out)
+  if [[ $? == 0 ]]; then
+    circuit_set_path=$(echo $circuit_set_paths | cut -d' ' -f1)
+    echo $id1 >> $circuit_set_path
+    echo $id2 >> $circuit_set_path
+    
+    if [[ $(echo $circuit_set_paths | wc -w) > 1 ]]; then
+      merge_paths=$(echo $circuit_set_paths | cut -d' ' -f2-)
+      test $DEBUG && echo Merging $merge_paths into $circuit_set_paths
+      for merge_path in $merge_paths; do
+        cat $merge_path >> $circuit_set_path
+        rm $merge_path
+      done
+    fi
+  else
+    circuit_set_path=.tmp.circuits.$id1.out
+    echo $id1 >> $circuit_set_path
+    echo $id2 >> $circuit_set_path
+  fi
+  test $DEBUG && echo "Connection: $id1 <-> $id2 (in tmp file $circuit_set_path)"
+done < $OUT_CONNECTIONS
+
+for circuit_set_path in .tmp.circuits.*.out; do
+  echo $circuit_set_path
+  cat $circuit_set_path | sort -nu | wc -l
+done | sort -nr | head -n3 | awk 'BEGIN { prod = 1 }; { prod=$1*prod }; END { print prod }'
+
+rm $OUT_DISTANCES $OUT_CONNECTIONS $OUT_BC_COMMAND .tmp.circuits.*.out
