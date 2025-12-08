@@ -2,6 +2,8 @@
 #
 # Usage : RunUnitTests.sh [DayN] [PartN] [TestN]
 
+export TESTING=1
+
 TEST_OUTPUT_PATH=.test.out
 
 if [[ $# -gt 3 ]]; then
