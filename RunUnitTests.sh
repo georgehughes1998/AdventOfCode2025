@@ -43,8 +43,15 @@ for DayNumber in $DayNumbers; do
       fi
       OutputExpected=$(cat $TestExpectedPath)
       
+      # Timer
+      start_time=$(date +%s%N | cut -b1-13)
+      
       # Run the solution
       ./RunSolution.sh $DayNumber $PartNumber $TestInputPath > $TEST_OUTPUT_PATH
+      
+      # Timer
+      end_time=$(date +%s%N | cut -b1-13)
+      diff_time=$(($end_time - $start_time))
       
       # Display the output from the helper
       # cat $TEST_OUTPUT_PATH
@@ -59,6 +66,7 @@ for DayNumber in $DayNumbers; do
         OutputActual=
       fi
       
+      echo "Test completed in ${diff_time}ms"
       if [[ $OutputActual == $OutputExpected ]]; then
         echo "PASS: OutputActual == OutputExpected"
       else
