@@ -13,7 +13,7 @@ fi
 
 DayNumbers=${1:-ALL}
 PartNumbers=${2:-ALL}
-TestNumbers=${3:-ALL}
+TestNumber=${3:-ALL}
 
 echo "Running Day(s) $DayNumber Part(s) $PartNumber Test(s) $TestNumber"
 
@@ -28,7 +28,7 @@ fi
 for DayNumber in $DayNumbers; do
   for PartNumber in $PartNumbers; do
     # Get the paths for the test inputs
-    if [[ "$TestNumbers" == "ALL" ]]; then
+    if [[ "$TestNumber" == "ALL" ]]; then
       TestInputPaths="Inputs/Test/Day${DayNumber}Part${PartNumber}Test*.input.txt"
     else
       TestInputPaths="Inputs/Test/Day${DayNumber}Part${PartNumber}Test${TestNumber}.input.txt"
