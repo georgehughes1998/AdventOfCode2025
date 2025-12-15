@@ -2,32 +2,26 @@
 #
 # Usage : Solutions/Day7Part1.sh input.txt
 
-DEBUG=1
+DEBUG=
 
-offsets=
-total=0
+current_beams=$(head -n1 $1 | grep "S" -bo | grep -o "[0-9]\+")
+
+total_splits=0
 while read line; do
-  next_offsets=$(echo $line| grep "\^" -b -o | grep -o "[0-9]\+")
-  if [[ -z "$next_offsets" ]]; then
-    continue
-  elif [[ -z "$offsets" ]]; then
-    offsets=$next_offsets
-    ((total++))
-    continue
-  fi
+  offsets=$(echo $line | grep "\^" -bo | grep -o "[0-9]\+")
   
-  match_filter_args=$(for v in $offsets; do echo "-e $((v-1)) -e $((v+1))"; done | tr '\n' ' ')
-  non_match_filter_args=$(for v in $next_offsets; do echo "-e $((v-1)) -e $((v+1))"; done | tr '\n' ' ')
-
-  next_offsets_matched=$(echo $next_offsets | tr ' ' '\n' | grep -w $match_filter_args -o  | sort -nu)
-  offsets_non_matched=$(echo $offsets | tr ' ' '\n' | grep -wov $non_match_filter_args | sort -nu)
+  beams_matched=$(echo $current_beams | grep -wo $(echo $offsets | tr ' ' '\n' | awk '{ print "-e "$0 }'))
+  beams_non_matched=$(echo $current_beams | tr ' ' '\n' | grep -wv $(echo $offsets | tr ' ' '\n' | awk '{ print "-e "$0 }'))
   
-  number_matches=$(echo $next_offsets_matched | wc -w)
-  total=$(($total + $number_matches))
-  
-  test $DEBUG && echo Offsets: $offsets, next_offsets: $next_offsets, next_offsets_matched: $next_offsets_matched, offsets_non_matched: $offsets_non_matched, total: $total
+  split_beams=$(echo $beams_matched | tr ' ' '\n' | grep '.\+' | awk '{ print $1-1" "$1+1 }')
+  count_matched=$(echo $beams_matched | wc -w | tr -d ' ')
+  total_splits=$(($total_splits + $count_matched))
+    
+  test $DEBUG && echo current_beams: $current_beams, offsets: $offsets, count_matched: $count_matched
+  test $DEBUG && echo "-->" beams_matched: $beams_matched, beams_non_matched: $beams_non_matched, split_beams: $split_beams
+  test $DEBUG && echo
 
-  offsets=$(echo "$next_offsets_matched $offsets_non_matched" | tr ' ' '\n' | sort -nu)
-done < $1
+  current_beams=$(echo "$split_beams $beams_non_matched" | tr ' ' '\n' | sort -nu)
+done < <(cat $1 | grep "\^")
 
-echo $total
+echo $total_splits
