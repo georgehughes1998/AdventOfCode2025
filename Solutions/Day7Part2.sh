@@ -2,8 +2,10 @@
 #
 # Usage : Solutions/Day7Part2.sh input.txt
 
-DEBUG=1
+DEBUG=
 
+CURRENT_BEAMS=.tmp.beams.out
+>$CURRENT_BEAMS
 GRAPH=.tmp.graph.out
 > $GRAPH
 MEMOIZE=.tmp.memoize.out
@@ -17,14 +19,25 @@ construct_node_name() {
   echo s${step}o${offset}
 }
 
-# Usage : add_node step offset children_offsets
+# Usage : add_node step offset
 add_node() {
-  [[ "$#" -ne 3 ]] && { echo "add_node requires 3 arguments"; exit 1; }
+  [[ "$#" -ne 2 ]] && { echo "add_node requires 2 arguments"; exit 1; }
   local step=$1
   local offset=$2
-  local children_offsets=$3
-  local children=$(for child_offset in $children_offsets; do construct_node_name $((step + 1)) $child_offset; done )
-  echo $(construct_node_name $step $offset): ${children} >> $GRAPH
+  node_name=$(construct_node_name $step $offset)
+  grep -q "${node_name}" $GRAPH || echo "${node_name}:" >> $GRAPH
+}
+
+# Usage : add_child parent_step parent_offset child_step child_offset
+add_child() {
+  [[ "$#" -ne 4 ]] && { echo "add_child requires 4 arguments"; exit 1; }
+  local parent_step=$1
+  local parent_offset=$2
+  local child_step=$3
+  local child_offset=$4
+  parent_node_name=$(construct_node_name $parent_step $parent_offset)
+  child_node_name=$(construct_node_name $child_step $child_offset)
+  sed -i -e "/${parent_node_name}:/ s/$/ ${child_node_name}/" $GRAPH
 }
 
 # Usage : get_head
@@ -40,32 +53,56 @@ get_children() {
   cat $GRAPH | grep "$node:" | sed "s/$node://g"
 }
 
+# Usage : add_beam step offset
+add_beam() {
+  [[ "$#" -ne 2 ]] && { echo "add_beam requires 2 arguments"; exit 1; }
+  step=$1
+  offset=$2
+  grep -q "${step} ${offset}" $CURRENT_BEAMS || echo "${step} ${offset}" >> $CURRENT_BEAMS
+}
+
+# Usage : remove_beam step offset
+remove_beam() {
+  [[ "$#" -ne 2 ]] && { echo "remove_beam requires 2 arguments"; exit 1; }
+  step=$1
+  offset=$2
+  sed -i -e "/${step} ${offset}/d" $CURRENT_BEAMS
+}
+
 # Usage : construct_graph input_path
 construct_graph() {
   [[ "$#" -ne 1 ]] && { echo "construct_graph requires 1 argument"; exit 1; }
   input_path=$1
   
-  current_beams=$(head -n1 $input_path | grep "S" -bo | grep -o "[0-9]\+")
-
-  step=0
+  current_step=0
+  
+  start_offset=$(head -n1 $input_path | grep "S" -bo | grep -o "[0-9]\+")
+  add_beam $current_step $start_offset
+  add_node $current_step $start_offset
+  
   while read line; do
-    offsets=$(echo $line | grep "\^" -bo | grep -o "[0-9]\+")
+    ((current_step++))
     
-    beams_matched=$(echo $current_beams | grep -wo $(echo $offsets | tr ' ' '\n' | awk '{ print "-e "$0 }'))
-    beams_non_matched=$(echo $current_beams | tr ' ' '\n' | grep -wv $(echo $offsets | tr ' ' '\n' | awk '{ print "-e "$0 }'))
     
-    split_beams=
-    for offset in $beams_matched; do
-      new_offsets="$(($offset + 1)) $(($offset - 1))"
-      add_node $step $offset "$new_offsets"
-      split_beams="$split_beams $new_offsets"
-      test $DEBUG && echo offset: $offset, new_offsets: $new_offsets
-    done
-  
-    test $DEBUG && echo "-->" beams_matched: $beams_matched, beams_non_matched: $beams_non_matched, split_beams: $split_beams
-  
-    current_beams=$(echo "$split_beams $beams_non_matched" | tr ' ' '\n' | sort -nu)
-    ((step++))
+    splitter_offsets=$(echo $line | grep "\^" -bo | grep -o "[0-9]\+")
+    test $DEBUG && echo splitter_offsets: $splitter_offsets
+    
+    while read beam_step beam_offset; do
+      test $DEBUG && echo "-->" beam_step: $beam_step, beam_offset: $beam_offset
+      echo $splitter_offsets | grep -woq $beam_offset && {
+        
+        for child_beam_offset in $(($beam_offset + 1)) $(($beam_offset - 1)); do
+          test $DEBUG && echo "---->" Adding child beam current_step: $current_step, child_beam_offset: $child_beam_offset
+          add_node $current_step $child_beam_offset
+          add_child $beam_step $beam_offset $current_step $child_beam_offset
+          add_beam $current_step $child_beam_offset
+        done
+
+        remove_beam $beam_step $beam_offset
+      }
+      
+    done < <(cat $CURRENT_BEAMS)
+    
   done < <(cat $input_path | grep "\^")
 }
 
@@ -104,10 +141,7 @@ count_paths() {
 	fi
 }
 
-
 construct_graph $1
 count_paths $(get_head)
 
-cat $GRAPH
-
-rm $GRAPH $MEMOIZE
+rm $GRAPH $MEMOIZE $CURRENT_BEAMS
